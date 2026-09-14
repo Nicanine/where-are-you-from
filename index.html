@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Where are you from?</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Arial,sans-serif;background:#f5f3ed;color:#1c1c1c}
+header{height:145px;background:white;padding:22px 28px;display:flex;align-items:center;justify-content:center;text-align:center}h1{font-size:clamp(32px,6vw,58px);margin:0;letter-spacing:-1px}p{margin:8px 0 0;font-size:18px;color:#666}
+#map{height:calc(100vh - 145px)}#choice{position:fixed;z-index:2000;left:50%;bottom:22px;transform:translateX(-50%);background:#fff;padding:18px 22px;border-radius:16px;box-shadow:0 6px 30px #0003;text-align:center;display:none;min-width:270px}.buttons{margin-top:12px}button{border:0;border-radius:10px;padding:11px 17px;font-size:16px;font-weight:bold;cursor:pointer}#confirm{background:#1c1c1c;color:#fff;margin-left:7px}#cancel{background:#eee}
+#done{display:none;position:fixed;inset:0;z-index:3000;background:#fff;align-items:center;justify-content:center;text-align:center;padding:30px}.ok{font-size:clamp(32px,7vw,64px);font-weight:bold}.sub{font-size:20px;color:#666;margin-top:12px}
+</style></head>
+<body>
+<header><div><h1>WHERE ARE YOU FROM?</h1><p>Seleziona il tuo Paese di origine sulla mappa</p></div></header>
+<div id="map"></div>
+<div id="choice"><strong id="country"></strong><div class="buttons"><button id="cancel">Annulla</button><button id="confirm">Conferma</button></div></div>
+<div id="done"><div><div class="ok">Grazie! 🌍</div><div class="sub">La tua risposta è stata aggiunta alla mappa.</div></div></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const SUPABASE_URL='https://moxytzkrlzthpcrtivbg.supabase.co';
+const SUPABASE_KEY='sb_publishable_FVDf2vyHJAykJ52481stOA_A5Ojf-3A';
+const GEOJSON_URL='https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
+const map=L.map('map',{minZoom:2,maxZoom:6,worldCopyJump:true,zoomControl:false}).setView([20,0],2);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);
+let selected=null, layerSelected=null, geoLayer=null;
+function codeOf(p){return String(p.ISO_A3||p.iso_a3||p.ADM0_A3||'').toUpperCase()}
+fetch(GEOJSON_URL).then(r=>r.json()).then(data=>{
+ geoLayer=L.geoJSON(data,{style:{color:'#777',weight:1,fillColor:'#d8e5e2',fillOpacity:.75},onEachFeature:(f,l)=>{
+  const p=f.properties||{}, name=p.ADMIN||p.NAME||p.name||'Paese', code=codeOf(p); l.bindTooltip(name);
+  l.on('click',()=>{if(!code||code.length!==3)return;selected={code,name};layerSelected=l;geoLayer.resetStyle();l.setStyle({fillColor:'#222',color:'#222',fillOpacity:.95});document.getElementById('country').textContent=name;document.getElementById('choice').style.display='block'})
+ }}).addTo(map);
+}).catch(e=>{console.error(e);alert('Impossibile caricare la mappa. Controlla la connessione internet.')});
+document.getElementById('cancel').onclick=()=>{selected=null;document.getElementById('choice').style.display='none';if(geoLayer)geoLayer.resetStyle()};
+document.getElementById('confirm').onclick=async()=>{
+ if(!selected)return;
+ if(localStorage.getItem('whereAreYouFromSubmitted')){alert('Da questo browser è già stata inviata una risposta.');return}
+ const r=await fetch(SUPABASE_URL+'/rest/v1/responses',{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({country_code:selected.code,country_name:selected.name})});
+ if(!r.ok){console.error(await r.text());alert('Non è stato possibile registrare la risposta.');return}
+ localStorage.setItem('whereAreYouFromSubmitted','1');document.getElementById('choice').style.display='none';document.getElementById('done').style.display='flex';
+};
+</script></body></html>
