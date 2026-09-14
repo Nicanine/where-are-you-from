@@ -1,42 +1,827 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Where are you from?</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
-*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Arial,sans-serif;background:#f5f3ed;color:#1c1c1c}
-header{height:145px;background:white;padding:22px 28px;display:flex;align-items:center;justify-content:center;text-align:center}h1{font-size:clamp(32px,6vw,58px);margin:0;letter-spacing:-1px}p{margin:8px 0 0;font-size:18px;color:#666}
-#map{height:calc(100vh - 145px)}#choice{position:fixed;z-index:2000;left:50%;bottom:22px;transform:translateX(-50%);background:#fff;padding:18px 22px;border-radius:16px;box-shadow:0 6px 30px #0003;text-align:center;display:none;min-width:270px}.buttons{margin-top:12px}button{border:0;border-radius:10px;padding:11px 17px;font-size:16px;font-weight:bold;cursor:pointer}#confirm{background:#1c1c1c;color:#fff;margin-left:7px}#cancel{background:#eee}
-#done{display:none;position:fixed;inset:0;z-index:3000;background:#fff;align-items:center;justify-content:center;text-align:center;padding:30px}.ok{font-size:clamp(32px,7vw,64px);font-weight:bold}.sub{font-size:20px;color:#666;margin-top:12px}
-</style></head>
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f7f5ef;
+  color: #171717;
+}
+
+header {
+  padding: 20px 22px 16px;
+  background: white;
+  text-align: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(30px, 7vw, 52px);
+  letter-spacing: -1.5px;
+}
+
+.subtitle {
+  margin-top: 7px;
+  color: #555;
+  font-size: 17px;
+}
+
+.controls {
+  background: white;
+  padding: 0 18px 18px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 1001;
+}
+
+.searchBox {
+  position: relative;
+  width: min(520px, 90vw);
+}
+
+#search {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+#suggestions {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  width: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px #0002;
+  display: none;
+}
+
+.suggestion {
+  padding: 12px 15px;
+  cursor: pointer;
+}
+
+.suggestion:hover {
+  background: #f0f0f0;
+}
+
+#map {
+  height: calc(100vh - 178px);
+  min-height: 430px;
+}
+
+#selected {
+  position: fixed;
+  z-index: 2000;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  background: white;
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: 0 5px 25px #0003;
+  display: none;
+  width: min(360px, 90vw);
+  text-align: center;
+}
+
+#countryLabel {
+  font-size: 21px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+#message {
+  font-size: 17px;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+#confirm {
+  background: #171717;
+  color: white;
+  margin-left: 7px;
+}
+
+#cancel {
+  background: #eee;
+}
+
+@media (max-width: 600px) {
+  #map {
+    height: calc(100vh - 205px);
+  }
+
+  header {
+    padding-top: 16px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+  }
+}
+</style>
+</head>
+
 <body>
-<header><div><h1>WHERE ARE YOU FROM?</h1><p>Seleziona il tuo Paese di origine sulla mappa</p></div></header>
+
+<header>
+  <h1>WHERE ARE YOU FROM?</h1>
+  <div class="subtitle">
+    Scegli il Paese da cui provieni
+  </div>
+</header>
+
+<div class="controls">
+  <div class="searchBox">
+
+    <input
+      id="search"
+      type="search"
+      placeholder="Cerca un Paese…"
+      autocomplete="off"
+    >
+
+    <div id="suggestions"></div>
+
+  </div>
+</div>
+
 <div id="map"></div>
-<div id="choice"><strong id="country"></strong><div class="buttons"><button id="cancel">Annulla</button><button id="confirm">Conferma</button></div></div>
-<div id="done"><div><div class="ok">Grazie! 🌍</div><div class="sub">La tua risposta è stata aggiunta alla mappa.</div></div></div>
+
+<div id="selected">
+
+  <div id="countryLabel"></div>
+
+  <div id="message"></div>
+
+  <div id="buttons">
+
+    <button id="cancel">
+      Annulla
+    </button>
+
+    <button id="confirm">
+      Conferma
+    </button>
+
+  </div>
+
+</div>
+
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
-const SUPABASE_URL='https://moxytzkrlzthpcrtivbg.supabase.co';
-const SUPABASE_KEY='sb_publishable_FVDf2vyHJAykJ52481stOA_A5Ojf-3A';
-const GEOJSON_URL='https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
-const map=L.map('map',{minZoom:2,maxZoom:6,worldCopyJump:true,zoomControl:false}).setView([20,0],2);
-L.control.zoom({position:'bottomright'}).addTo(map);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);
-let selected=null, layerSelected=null, geoLayer=null;
-function codeOf(p){return String(p.ISO_A3||p.iso_a3||p.ADM0_A3||'').toUpperCase()}
-fetch(GEOJSON_URL).then(r=>r.json()).then(data=>{
- geoLayer=L.geoJSON(data,{style:{color:'#777',weight:1,fillColor:'#d8e5e2',fillOpacity:.75},onEachFeature:(f,l)=>{
-  const p=f.properties||{}, name=p.ADMIN||p.NAME||p.name||'Paese', code=codeOf(p); l.bindTooltip(name);
-  l.on('click',()=>{if(!code||code.length!==3)return;selected={code,name};layerSelected=l;geoLayer.resetStyle();l.setStyle({fillColor:'#222',color:'#222',fillOpacity:.95});document.getElementById('country').textContent=name;document.getElementById('choice').style.display='block'})
- }}).addTo(map);
-}).catch(e=>{console.error(e);alert('Impossibile caricare la mappa. Controlla la connessione internet.')});
-document.getElementById('cancel').onclick=()=>{selected=null;document.getElementById('choice').style.display='none';if(geoLayer)geoLayer.resetStyle()};
-document.getElementById('confirm').onclick=async()=>{
- if(!selected)return;
- if(localStorage.getItem('whereAreYouFromSubmitted')){alert('Da questo browser è già stata inviata una risposta.');return}
- const r=await fetch(SUPABASE_URL+'/rest/v1/responses',{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({country_code:selected.code,country_name:selected.name})});
- if(!r.ok){console.error(await r.text());alert('Non è stato possibile registrare la risposta.');return}
- localStorage.setItem('whereAreYouFromSubmitted','1');document.getElementById('choice').style.display='none';document.getElementById('done').style.display='flex';
-};
-</script></body></html>
+
+/* =====================================================
+   SUPABASE
+   ===================================================== */
+
+const SUPABASE_URL =
+"https://moxytzkrlzthpcrtivbg.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_FVDf2vyHJAykJ52481stOA_A5Ojf-3A";
+
+
+/* =====================================================
+   MAPPA
+   ===================================================== */
+
+const GEOJSON_URL =
+"https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson";
+
+
+const map = L.map("map", {
+  minZoom: 2,
+  maxZoom: 6,
+  worldCopyJump: true
+}).setView([20, 0], 2);
+
+
+L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    maxZoom: 19,
+    attribution: "© OpenStreetMap contributors"
+  }
+).addTo(map);
+
+
+/* =====================================================
+   PAESI
+   ===================================================== */
+
+const countries = [
+
+["AFG","Afghanistan"],
+["ALB","Albania"],
+["DZA","Algeria"],
+["AND","Andorra"],
+["AGO","Angola"],
+["ATG","Antigua e Barbuda"],
+["ARG","Argentina"],
+["ARM","Armenia"],
+["AUS","Australia"],
+["AUT","Austria"],
+["AZE","Azerbaigian"],
+
+["BHS","Bahamas"],
+["BHR","Bahrein"],
+["BGD","Bangladesh"],
+["BRB","Barbados"],
+["BLR","Bielorussia"],
+["BEL","Belgio"],
+["BLZ","Belize"],
+["BEN","Benin"],
+["BTN","Bhutan"],
+["BOL","Bolivia"],
+["BIH","Bosnia ed Erzegovina"],
+["BWA","Botswana"],
+["BRA","Brasile"],
+["BRN","Brunei"],
+["BGR","Bulgaria"],
+["BFA","Burkina Faso"],
+["BDI","Burundi"],
+
+["CPV","Capo Verde"],
+["KHM","Cambogia"],
+["CMR","Camerun"],
+["CAN","Canada"],
+["CAF","Repubblica Centrafricana"],
+["TCD","Ciad"],
+["CHL","Cile"],
+["CHN","Cina"],
+["COL","Colombia"],
+["COM","Comore"],
+["COG","Congo"],
+["COD","Repubblica Democratica del Congo"],
+["CRI","Costa Rica"],
+["CIV","Costa d'Avorio"],
+["HRV","Croazia"],
+["CUB","Cuba"],
+["CYP","Cipro"],
+["CZE","Cechia"],
+
+["DNK","Danimarca"],
+["DJI","Gibuti"],
+["DMA","Dominica"],
+["DOM","Repubblica Dominicana"],
+
+["ECU","Ecuador"],
+["EGY","Egitto"],
+["SLV","El Salvador"],
+["GNQ","Guinea Equatoriale"],
+["ERI","Eritrea"],
+["EST","Estonia"],
+["SWZ","Eswatini"],
+["ETH","Etiopia"],
+
+["FJI","Figi"],
+["FIN","Finlandia"],
+["FRA","Francia"],
+
+["GAB","Gabon"],
+["GMB","Gambia"],
+["GEO","Georgia"],
+["DEU","Germania"],
+["GHA","Ghana"],
+["GRC","Grecia"],
+["GRD","Grenada"],
+["GTM","Guatemala"],
+["GIN","Guinea"],
+["GNB","Guinea-Bissau"],
+["GUY","Guyana"],
+
+["HTI","Haiti"],
+["HND","Honduras"],
+["HUN","Ungheria"],
+
+["ISL","Islanda"],
+["IND","India"],
+["IDN","Indonesia"],
+["IRN","Iran"],
+["IRQ","Iraq"],
+["IRL","Irlanda"],
+["ISR","Israele"],
+["ITA","Italia"],
+
+["JAM","Giamaica"],
+["JPN","Giappone"],
+["JOR","Giordania"],
+
+["KAZ","Kazakistan"],
+["KEN","Kenya"],
+["KIR","Kiribati"],
+["PRK","Corea del Nord"],
+["KOR","Corea del Sud"],
+["KWT","Kuwait"],
+["KGZ","Kirghizistan"],
+
+["LAO","Laos"],
+["LVA","Lettonia"],
+["LBN","Libano"],
+["LSO","Lesotho"],
+["LBR","Liberia"],
+["LBY","Libia"],
+["LIE","Liechtenstein"],
+["LTU","Lituania"],
+["LUX","Lussemburgo"],
+
+["MDG","Madagascar"],
+["MWI","Malawi"],
+["MYS","Malesia"],
+["MDV","Maldive"],
+["MLI","Mali"],
+["MLT","Malta"],
+["MHL","Isole Marshall"],
+["MRT","Mauritania"],
+["MUS","Mauritius"],
+["MEX","Messico"],
+["FSM","Micronesia"],
+["MDA","Moldavia"],
+["MCO","Monaco"],
+["MNG","Mongolia"],
+["MNE","Montenegro"],
+["MAR","Marocco"],
+["MOZ","Mozambico"],
+["MMR","Myanmar"],
+
+["NAM","Namibia"],
+["NRU","Nauru"],
+["NPL","Nepal"],
+["NLD","Paesi Bassi"],
+["NZL","Nuova Zelanda"],
+["NIC","Nicaragua"],
+["NER","Niger"],
+["NGA","Nigeria"],
+["MKD","Macedonia del Nord"],
+["NOR","Norvegia"],
+
+["OMN","Oman"],
+
+["PAK","Pakistan"],
+["PLW","Palau"],
+["PAN","Panama"],
+["PNG","Papua Nuova Guinea"],
+["PRY","Paraguay"],
+["PER","Perù"],
+["PHL","Filippine"],
+["POL","Polonia"],
+["PRT","Portogallo"],
+
+["QAT","Qatar"],
+
+["ROU","Romania"],
+["RUS","Russia"],
+["RWA","Ruanda"],
+
+["KNA","Saint Kitts e Nevis"],
+["LCA","Santa Lucia"],
+["VCT","Saint Vincent e Grenadine"],
+["WSM","Samoa"],
+["SMR","San Marino"],
+["STP","São Tomé e Príncipe"],
+["SAU","Arabia Saudita"],
+["SEN","Senegal"],
+["SRB","Serbia"],
+["SYC","Seychelles"],
+["SLE","Sierra Leone"],
+["SGP","Singapore"],
+["SVK","Slovacchia"],
+["SVN","Slovenia"],
+["SLB","Isole Salomone"],
+["SOM","Somalia"],
+["ZAF","Sudafrica"],
+["SSD","Sudan del Sud"],
+["ESP","Spagna"],
+["LKA","Sri Lanka"],
+["SDN","Sudan"],
+["SUR","Suriname"],
+["SWE","Svezia"],
+["CHE","Svizzera"],
+["SYR","Siria"],
+
+["TWN","Taiwan"],
+["TJK","Tagikistan"],
+["TZA","Tanzania"],
+["THA","Thailandia"],
+["TLS","Timor Est"],
+["TGO","Togo"],
+["TON","Tonga"],
+["TTO","Trinidad e Tobago"],
+["TUN","Tunisia"],
+["TUR","Turchia"],
+["TKM","Turkmenistan"],
+["TUV","Tuvalu"],
+
+["UGA","Uganda"],
+["UKR","Ucraina"],
+["ARE","Emirati Arabi Uniti"],
+["GBR","Regno Unito"],
+["USA","Stati Uniti"],
+["URY","Uruguay"],
+["UZB","Uzbekistan"],
+
+["VUT","Vanuatu"],
+["VAT","Città del Vaticano"],
+["VEN","Venezuela"],
+["VNM","Vietnam"],
+
+["YEM","Yemen"],
+
+["ZMB","Zambia"],
+["ZWE","Zimbabwe"]
+
+];
+
+
+/* =====================================================
+   FUNZIONI
+   ===================================================== */
+
+let geoLayer = null;
+let selected = null;
+
+const byCode = {};
+
+countries.forEach(country => {
+  byCode[country[0]] = country;
+});
+
+
+function getFeatureCode(properties) {
+
+  return String(
+    properties.ISO_A3 ||
+    properties.iso_a3 ||
+    properties.ADM0_A3 ||
+    ""
+  ).toUpperCase();
+
+}
+
+
+function showSelected(country) {
+
+  selected = country;
+
+  document.getElementById("countryLabel")
+    .textContent = country[1];
+
+  document.getElementById("message")
+    .textContent = "";
+
+  document.getElementById("buttons")
+    .style.display = "block";
+
+  document.getElementById("selected")
+    .style.display = "block";
+
+}
+
+
+function clearSelection() {
+
+  selected = null;
+
+  document.getElementById("selected")
+    .style.display = "none";
+
+}
+
+
+/* =====================================================
+   CARICAMENTO MAPPA
+   ===================================================== */
+
+fetch(GEOJSON_URL)
+
+.then(response => response.json())
+
+.then(data => {
+
+  geoLayer = L.geoJSON(data, {
+
+    style: {
+      color: "#777",
+      weight: 1,
+      fillColor: "#d9e7e4",
+      fillOpacity: 0.72
+    },
+
+    onEachFeature: function(feature, layer) {
+
+      const properties =
+        feature.properties || {};
+
+      const code =
+        getFeatureCode(properties);
+
+      const known =
+        byCode[code];
+
+      const name =
+        known
+        ? known[1]
+        : (
+          properties.ADMIN ||
+          properties.NAME ||
+          properties.name ||
+          ""
+        );
+
+      if (name) {
+        layer.bindTooltip(name);
+      }
+
+      layer.on("click", function() {
+
+        if (known) {
+          showSelected(known);
+        }
+
+      });
+
+    }
+
+  }).addTo(map);
+
+})
+
+.catch(function(error) {
+
+  console.error(
+    "Errore caricamento mappa:",
+    error
+  );
+
+});
+
+
+/* =====================================================
+   RICERCA PAESI
+   ===================================================== */
+
+const search =
+  document.getElementById("search");
+
+const suggestions =
+  document.getElementById("suggestions");
+
+
+search.addEventListener("input", function() {
+
+  const query =
+    search.value.trim().toLowerCase();
+
+  suggestions.innerHTML = "";
+
+  if (!query) {
+
+    suggestions.style.display = "none";
+
+    return;
+  }
+
+
+  const matches =
+    countries
+      .filter(country =>
+        country[1]
+          .toLowerCase()
+          .includes(query)
+      )
+      .slice(0, 10);
+
+
+  matches.forEach(function(country) {
+
+    const item =
+      document.createElement("div");
+
+    item.className = "suggestion";
+
+    item.textContent =
+      country[1];
+
+
+    item.addEventListener(
+      "click",
+      function() {
+
+        search.value =
+          country[1];
+
+        suggestions.style.display =
+          "none";
+
+        showSelected(country);
+
+      }
+    );
+
+
+    suggestions.appendChild(item);
+
+  });
+
+
+  suggestions.style.display =
+    matches.length
+    ? "block"
+    : "none";
+
+});
+
+
+/* =====================================================
+   ANNULLA
+   ===================================================== */
+
+document
+  .getElementById("cancel")
+  .addEventListener("click", function() {
+
+    clearSelection();
+
+  });
+
+
+/* =====================================================
+   CONFERMA
+   ===================================================== */
+
+document
+  .getElementById("confirm")
+  .addEventListener("click", async function() {
+
+    if (!selected) {
+      return;
+    }
+
+
+    /* Controllo risposta già inviata */
+
+    if (
+      localStorage.getItem(
+        "whereAreYouFromSubmitted"
+      )
+    ) {
+
+      document.getElementById(
+        "countryLabel"
+      ).textContent =
+        "Risposta già registrata";
+
+      document.getElementById(
+        "message"
+      ).textContent =
+        "Da questo browser è già stata inviata una risposta.";
+
+      document.getElementById(
+        "buttons"
+      ).style.display =
+        "none";
+
+      return;
+    }
+
+
+    /* Invio a Supabase */
+
+    try {
+
+      const response =
+        await fetch(
+          SUPABASE_URL +
+          "/rest/v1/responses",
+          {
+
+            method: "POST",
+
+            headers: {
+
+              "apikey":
+                SUPABASE_KEY,
+
+              "Authorization":
+                "Bearer " +
+                SUPABASE_KEY,
+
+              "Content-Type":
+                "application/json",
+
+              "Prefer":
+                "return=minimal"
+
+            },
+
+            body: JSON.stringify({
+
+              country_code:
+                selected[0],
+
+              country_name:
+                selected[1]
+
+            })
+
+          }
+        );
+
+
+      if (!response.ok) {
+
+        const errorText =
+          await response.text();
+
+        console.error(
+          "Supabase:",
+          errorText
+        );
+
+        document.getElementById(
+          "message"
+        ).textContent =
+          "Non è stato possibile registrare la risposta. Riprova.";
+
+        return;
+
+      }
+
+
+      /* Risposta registrata */
+
+      localStorage.setItem(
+        "whereAreYouFromSubmitted",
+        "1"
+      );
+
+
+      document.getElementById(
+        "countryLabel"
+      ).textContent =
+        "Grazie! 🌍";
+
+
+      document.getElementById(
+        "message"
+      ).textContent =
+        "La tua risposta è stata aggiunta alla mappa.";
+
+
+      document.getElementById(
+        "buttons"
+      ).style.display =
+        "none";
+
+
+    }
+
+    catch(error) {
+
+      console.error(error);
+
+      document.getElementById(
+        "message"
+      ).textContent =
+        "Errore di connessione. Riprova.";
+
+    }
+
+  });
+
+</script>
+
+</body>
+</html>
