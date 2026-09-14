@@ -1,7 +1,706 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Where are you from? — Live</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>*{box-sizing:border-box}html,body,#map{height:100%;margin:0}body{font-family:Arial,sans-serif;overflow:hidden}#map{height:100vh}.panel{position:fixed;z-index:1000;top:18px;left:18px;background:#fff;padding:18px 22px;border-radius:16px;box-shadow:0 5px 28px #0003;min-width:270px}h1{margin:0;font-size:28px}.stats{margin-top:8px;color:#666}.count{font-size:28px;font-weight:800;color:#222}#list{margin-top:12px;max-height:45vh;overflow:auto}.row{display:flex;justify-content:space-between;gap:30px;padding:6px 0;border-bottom:1px solid #eee}.note{font-size:12px;color:#888;margin-top:10px}</style></head><body><div id="map"></div><div class="panel"><h1>WHERE ARE YOU FROM?</h1><div class="stats"><span id="people" class="count">0</span> persone · <span id="countries" class="count">0</span> Paesi</div><div id="list"></div><div class="note">Aggiornamento automatico</div></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>
-const U='https://moxytzkrlzthpcrtivbg.supabase.co',K='sb_publishable_FVDf2vyHJAykJ52481stOA_A5Ojf-3A',G='https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
-const map=L.map('map',{minZoom:2,maxZoom:6,worldCopyJump:true,zoomControl:false}).setView([20,0],2);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(map);let gl,markers={};
-async function rows(){let r=await fetch(U+'/rest/v1/responses?select=country_code,country_name',{headers:{apikey:K,Authorization:'Bearer '+K}});return r.json()}
-function redraw(a){let c={};a.forEach(x=>{if(!c[x.country_code])c[x.country_code]={name:x.country_name,n:0};c[x.country_code].n++});Object.values(markers).forEach(m=>map.removeLayer(m));markers={};document.getElementById('people').textContent=a.length;document.getElementById('countries').textContent=Object.keys(c).length;if(gl)gl.eachLayer(l=>{let code=String(l.feature.properties.ISO_A3||'').toUpperCase(),n=c[code]?.n||0;l.setStyle({color:'#777',weight:1,fillColor:n?'#222':'#d8e5e2',fillOpacity:n?Math.min(.28+n*.08,.9):.65});if(n){let pt=l.getBounds().getCenter();markers[code]=L.circleMarker(pt,{radius:Math.min(8+n*2,28),color:'#222',fillColor:'#222',fillOpacity:.9,weight:1}).addTo(map).bindTooltip(c[code].name+' · '+n)}});let s=Object.values(c).sort((x,y)=>y.n-x.n);document.getElementById('list').innerHTML=s.slice(0,10).map(x=>'<div class="row"><span>'+x.name+'</span><strong>'+x.n+'</strong></div>').join('')}
-Promise.all([fetch(G).then(r=>r.json()),rows()]).then(([g,a])=>{gl=L.geoJSON(g,{style:{color:'#777',weight:1,fillColor:'#d8e5e2',fillOpacity:.65}}).addTo(map);redraw(a);setInterval(()=>rows().then(redraw),3000)}).catch(console.error);
-</script></body></html>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Where Are You From? – Live</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f7fa;
+      color: #1f2937;
+    }
+
+    header {
+      background: white;
+      text-align: center;
+      padding: 24px 20px 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: relative;
+      z-index: 1000;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 52px);
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      font-size: clamp(16px, 2vw, 24px);
+      color: #667085;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: bold;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #667085;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #map {
+      height: calc(100vh - 205px);
+      min-height: 500px;
+      width: 100%;
+    }
+
+    .country-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 50%;
+
+      background: rgba(37, 99, 235, 0.85);
+      border: 3px solid white;
+
+      color: white;
+      font-weight: bold;
+
+      box-shadow: 0 3px 12px rgba(0,0,0,0.30);
+
+      text-align: center;
+    }
+
+    .country-label {
+      background: white;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      padding: 4px 8px;
+
+      font-size: 13px;
+      font-weight: bold;
+
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+
+      white-space: nowrap;
+    }
+
+    .leaflet-tooltip.country-label::before {
+      display: none;
+    }
+
+    .error {
+      position: fixed;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+
+      background: #b42318;
+      color: white;
+
+      padding: 15px;
+      border-radius: 8px;
+
+      display: none;
+      z-index: 2000;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+
+  <h1>WHERE ARE YOU FROM?</h1>
+
+  <div class="subtitle">
+    Le provenienze dei partecipanti
+  </div>
+
+  <div class="stats">
+
+    <div class="stat">
+      <div class="stat-number" id="totalPeople">0</div>
+      <div class="stat-label">Partecipanti</div>
+    </div>
+
+    <div class="stat">
+      <div class="stat-number" id="totalCountries">0</div>
+      <div class="stat-label">Paesi</div>
+    </div>
+
+  </div>
+
+</header>
+
+<div id="map"></div>
+
+<div id="error" class="error"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+  /* =========================================================
+     SUPABASE
+     ========================================================= */
+
+  const SUPABASE_URL =
+    "https://moxytzkrlzthpcrtivbg.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable_FVDf2vyHJAykJ52481stOA_A5Ojf-3A";
+
+
+  /* =========================================================
+     MAPPA
+     ========================================================= */
+
+  const map = L.map("map", {
+    worldCopyJump: false,
+    minZoom: 2,
+    maxZoom: 6
+  }).setView([25, 10], 2);
+
+
+  L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19
+    }
+  ).addTo(map);
+
+
+  /* =========================================================
+     POSIZIONI DEI PAESI
+     
+     Usiamo coordinate fisse per rendere gli indicatori
+     affidabili anche quando il GeoJSON ha geometrie complesse.
+     ========================================================= */
+
+  const countryPositions = {
+
+    ITA: [42.5, 12.5],
+    FRA: [46.5, 2.5],
+    ESP: [40.2, -3.7],
+    PRT: [39.5, -8.0],
+    DEU: [51.0, 10.0],
+    AUT: [47.6, 14.1],
+    CHE: [46.8, 8.2],
+    BEL: [50.8, 4.5],
+    NLD: [52.2, 5.3],
+    GBR: [54.5, -3.4],
+    IRL: [53.2, -8.0],
+    DNK: [56.0, 10.0],
+    SWE: [62.0, 15.0],
+    NOR: [65.0, 13.0],
+    FIN: [64.5, 26.0],
+    ISL: [65.0, -19.0],
+
+    POL: [52.0, 19.0],
+    CZE: [49.8, 15.5],
+    SVK: [48.7, 19.5],
+    HUN: [47.2, 19.5],
+    ROU: [46.0, 25.0],
+    BGR: [42.7, 25.3],
+    GRC: [39.0, 22.0],
+    HRV: [45.1, 15.2],
+    SVN: [46.1, 14.9],
+    SRB: [44.0, 21.0],
+    BIH: [44.2, 17.7],
+    ALB: [41.2, 20.0],
+    MKD: [41.6, 21.7],
+    MNE: [42.7, 19.3],
+    UKR: [49.0, 32.0],
+    BLR: [53.7, 28.0],
+    LTU: [55.2, 24.0],
+    LVA: [57.0, 24.6],
+    EST: [58.6, 25.5],
+
+    TUR: [39.0, 35.0],
+    CYP: [35.1, 33.4],
+    MLT: [35.9, 14.4],
+
+    USA: [39.5, -98.5],
+    CAN: [56.0, -106.0],
+    MEX: [23.6, -102.5],
+    CUB: [21.5, -79.5],
+    DOM: [18.7, -70.2],
+    JAM: [18.1, -77.3],
+    BRA: [-10.0, -55.0],
+    ARG: [-34.0, -64.0],
+    CHL: [-30.0, -71.0],
+    PER: [-10.0, -76.0],
+    COL: [4.5, -74.0],
+    ECU: [-1.5, -78.0],
+    BOL: [-17.0, -65.0],
+    PRY: [-23.5, -58.0],
+    URY: [-32.8, -56.0],
+    VEN: [7.0, -66.0],
+
+    MAR: [31.8, -7.0],
+    DZA: [28.0, 2.5],
+    TUN: [34.0, 9.0],
+    LBY: [27.0, 17.0],
+    EGY: [27.0, 30.0],
+    SEN: [14.5, -14.5],
+    GHA: [8.0, -1.2],
+    NGA: [9.0, 8.0],
+    KEN: [0.2, 37.9],
+    ETH: [9.1, 40.5],
+    ZAF: [-30.5, 22.0],
+    ZWE: [-19.0, 29.8],
+    MOZ: [-18.5, 35.0],
+    MDG: [-20.0, 47.0],
+
+    ISR: [31.5, 34.8],
+    JOR: [31.2, 36.0],
+    LBN: [33.9, 35.8],
+    SAU: [24.0, 45.0],
+    ARE: [24.0, 54.0],
+    IRN: [32.0, 53.0],
+    IRQ: [33.0, 44.0],
+
+    IND: [22.5, 79.0],
+    PAK: [30.0, 70.0],
+    BGD: [24.0, 90.0],
+    LKA: [7.8, 80.7],
+    NPL: [28.4, 84.1],
+
+    CHN: [35.0, 103.0],
+    JPN: [36.2, 138.0],
+    KOR: [36.5, 127.8],
+    PRK: [40.0, 127.0],
+    MNG: [46.8, 103.8],
+
+    THA: [15.0, 101.0],
+    VNM: [16.0, 108.0],
+    KHM: [12.5, 105.0],
+    MYS: [4.5, 102.0],
+    SGP: [1.35, 103.8],
+    IDN: [-2.0, 118.0],
+    PHL: [12.8, 122.0],
+
+    AUS: [-25.0, 133.0],
+    NZL: [-41.0, 174.0],
+
+    RUS: [60.0, 100.0],
+    KAZ: [48.0, 67.0],
+    UZB: [41.5, 64.0],
+    GEO: [42.0, 43.5],
+    ARM: [40.2, 44.5],
+    AZE: [40.4, 47.7]
+
+  };
+
+
+  /* =========================================================
+     NOMI DEI PAESI
+     ========================================================= */
+
+  const countryNames = {
+
+    ITA: "Italia",
+    FRA: "Francia",
+    ESP: "Spagna",
+    PRT: "Portogallo",
+    DEU: "Germania",
+    AUT: "Austria",
+    CHE: "Svizzera",
+    BEL: "Belgio",
+    NLD: "Paesi Bassi",
+    GBR: "Regno Unito",
+    IRL: "Irlanda",
+    DNK: "Danimarca",
+    SWE: "Svezia",
+    NOR: "Norvegia",
+    FIN: "Finlandia",
+    ISL: "Islanda",
+
+    POL: "Polonia",
+    CZE: "Repubblica Ceca",
+    SVK: "Slovacchia",
+    HUN: "Ungheria",
+    ROU: "Romania",
+    BGR: "Bulgaria",
+    GRC: "Grecia",
+    HRV: "Croazia",
+    SVN: "Slovenia",
+    SRB: "Serbia",
+    BIH: "Bosnia-Erzegovina",
+    ALB: "Albania",
+    MKD: "Macedonia del Nord",
+    MNE: "Montenegro",
+    UKR: "Ucraina",
+    BLR: "Bielorussia",
+    LTU: "Lituania",
+    LVA: "Lettonia",
+    EST: "Estonia",
+
+    TUR: "Turchia",
+    CYP: "Cipro",
+    MLT: "Malta",
+
+    USA: "Stati Uniti",
+    CAN: "Canada",
+    MEX: "Messico",
+    CUB: "Cuba",
+    DOM: "Repubblica Dominicana",
+    JAM: "Giamaica",
+    BRA: "Brasile",
+    ARG: "Argentina",
+    CHL: "Cile",
+    PER: "Perù",
+    COL: "Colombia",
+    ECU: "Ecuador",
+    BOL: "Bolivia",
+    PRY: "Paraguay",
+    URY: "Uruguay",
+    VEN: "Venezuela",
+
+    MAR: "Marocco",
+    DZA: "Algeria",
+    TUN: "Tunisia",
+    LBY: "Libia",
+    EGY: "Egitto",
+    SEN: "Senegal",
+    GHA: "Ghana",
+    NGA: "Nigeria",
+    KEN: "Kenya",
+    ETH: "Etiopia",
+    ZAF: "Sudafrica",
+    ZWE: "Zimbabwe",
+    MOZ: "Mozambico",
+    MDG: "Madagascar",
+
+    ISR: "Israele",
+    JOR: "Giordania",
+    LBN: "Libano",
+    SAU: "Arabia Saudita",
+    ARE: "Emirati Arabi Uniti",
+    IRN: "Iran",
+    IRQ: "Iraq",
+
+    IND: "India",
+    PAK: "Pakistan",
+    BGD: "Bangladesh",
+    LKA: "Sri Lanka",
+    NPL: "Nepal",
+
+    CHN: "Cina",
+    JPN: "Giappone",
+    KOR: "Corea del Sud",
+    PRK: "Corea del Nord",
+    MNG: "Mongolia",
+
+    THA: "Thailandia",
+    VNM: "Vietnam",
+    KHM: "Cambogia",
+    MYS: "Malesia",
+    SGP: "Singapore",
+    IDN: "Indonesia",
+    PHL: "Filippine",
+
+    AUS: "Australia",
+    NZL: "Nuova Zelanda",
+
+    RUS: "Russia",
+    KAZ: "Kazakistan",
+    UZB: "Uzbekistan",
+    GEO: "Georgia",
+    ARM: "Armenia",
+    AZE: "Azerbaigian"
+
+  };
+
+
+  /* =========================================================
+     INDICATORI ATTUALI
+     ========================================================= */
+
+  let markers = {};
+
+
+  /* =========================================================
+     MOSTRA ERRORE
+     ========================================================= */
+
+  function showError(message) {
+
+    const box = document.getElementById("error");
+
+    box.textContent = message;
+    box.style.display = "block";
+
+  }
+
+
+  /* =========================================================
+     CREA / AGGIORNA INDICATORE
+     ========================================================= */
+
+  function createMarker(code, count) {
+
+    const position = countryPositions[code];
+
+    if (!position) {
+      console.warn(
+        "Coordinate non disponibili per:",
+        code
+      );
+      return;
+    }
+
+
+    /*
+     * Dimensione del cerchio.
+     *
+     * Con 1 persona = cerchio piccolo.
+     * Con molte persone = cerchio progressivamente più grande.
+     */
+
+    const size = Math.min(
+      22 + Math.sqrt(count) * 12,
+      90
+    );
+
+
+    const icon = L.divIcon({
+
+      className: "",
+
+      html:
+        `<div class="country-marker"
+              style="
+                width:${size}px;
+                height:${size}px;
+                font-size:${Math.max(13, size / 3)}px;
+              ">
+            ${count}
+         </div>`,
+
+      iconSize: [size, size],
+
+      iconAnchor: [
+        size / 2,
+        size / 2
+      ]
+
+    });
+
+
+    const marker = L.marker(
+      position,
+      { icon: icon }
+    );
+
+
+    marker.bindTooltip(
+      `${countryNames[code] || code}: ${count}`,
+      {
+        permanent: true,
+        direction: "top",
+        offset: [0, -size / 2],
+        className: "country-label"
+      }
+    );
+
+
+    marker.addTo(map);
+
+
+    markers[code] = marker;
+
+  }
+
+
+  /* =========================================================
+     AGGIORNA LA MAPPA
+     ========================================================= */
+
+  function updateMap(counts) {
+
+
+    /* Rimuoviamo gli indicatori precedenti */
+
+    Object.values(markers).forEach(
+      marker => map.removeLayer(marker)
+    );
+
+    markers = {};
+
+
+    /* Creiamo quelli aggiornati */
+
+    Object.entries(counts).forEach(
+      ([code, count]) => {
+
+        if (count > 0) {
+          createMarker(code, count);
+        }
+
+      }
+    );
+
+  }
+
+
+  /* =========================================================
+     CARICA RISPOSTE DA SUPABASE
+     ========================================================= */
+
+  async function loadResponses() {
+
+    try {
+
+      const response = await fetch(
+        SUPABASE_URL +
+        "/rest/v1/responses?select=country_code,country_name",
+        {
+          method: "GET",
+
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization":
+              "Bearer " + SUPABASE_KEY
+          }
+        }
+      );
+
+
+      if (!response.ok) {
+
+        const errorText =
+          await response.text();
+
+        throw new Error(
+          "Supabase: " +
+          response.status +
+          " – " +
+          errorText
+        );
+
+      }
+
+
+      const data =
+        await response.json();
+
+
+      /* Conteggi */
+
+      const counts = {};
+
+
+      data.forEach(row => {
+
+        const code =
+          String(row.country_code)
+          .trim()
+          .toUpperCase();
+
+
+        if (!counts[code]) {
+          counts[code] = 0;
+        }
+
+        counts[code]++;
+
+      });
+
+
+      /* Statistiche */
+
+      const totalPeople =
+        data.length;
+
+
+      const totalCountries =
+        Object.keys(counts).length;
+
+
+      document.getElementById(
+        "totalPeople"
+      ).textContent = totalPeople;
+
+
+      document.getElementById(
+        "totalCountries"
+      ).textContent = totalCountries;
+
+
+      /* Mappa */
+
+      updateMap(counts);
+
+
+      console.log(
+        "Risposte ricevute:",
+        data
+      );
+
+
+      console.log(
+        "Conteggi:",
+        counts
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      showError(
+        "Errore nel caricamento dei dati: " +
+        error.message
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     AVVIO
+     ========================================================= */
+
+  loadResponses();
+
+
+  /*
+   * Aggiornamento automatico ogni 3 secondi.
+   */
+
+  setInterval(
+    loadResponses,
+    3000
+  );
+
+</script>
+
+</body>
+</html>
