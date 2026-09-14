@@ -1,759 +1,1111 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
 
-  <title>Where Are You From? – Live</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+<title>Where Are You From? – Live</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f5f7fa;
-      color: #1f2937;
-    }
+<style>
 
-    header {
-      background: white;
-      text-align: center;
-      padding: 24px 20px 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      position: relative;
-      z-index: 1000;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    h1 {
-      margin: 0;
-      font-size: clamp(28px, 4vw, 52px);
-      letter-spacing: 2px;
-    }
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 
-    .subtitle {
-      margin-top: 8px;
-      font-size: clamp(16px, 2vw, 24px);
-      color: #667085;
-    }
+body {
 
-    .stats {
-      display: flex;
-      justify-content: center;
-      gap: 50px;
-      margin-top: 18px;
-      flex-wrap: wrap;
-    }
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
 
-    .stat {
-      text-align: center;
-    }
+  background:
+    linear-gradient(
+      135deg,
+      #08111f,
+      #10243a
+    );
 
-    .stat-number {
-      font-size: clamp(28px, 4vw, 46px);
-      font-weight: bold;
-    }
+  color: white;
+}
 
-    .stat-label {
-      font-size: 14px;
-      color: #667085;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
 
-    #map {
-      height: calc(100vh - 205px);
-      min-height: 500px;
-      width: 100%;
-    }
+/* =========================================================
+   HEADER
+   ========================================================= */
 
-    .country-marker {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+header {
 
-      border-radius: 50%;
+  height: 150px;
 
-      background: rgba(37, 99, 235, 0.85);
-      border: 3px solid white;
+  padding:
+    20px 40px 15px;
 
-      color: white;
-      font-weight: bold;
+  display: flex;
 
-      box-shadow: 0 3px 12px rgba(0,0,0,0.30);
+  align-items: center;
 
-      text-align: center;
-    }
+  justify-content: space-between;
 
-    .country-label {
-      background: white;
-      border: 1px solid #d0d5dd;
-      border-radius: 8px;
-      padding: 4px 8px;
+  position: relative;
 
-      font-size: 13px;
-      font-weight: bold;
+  z-index: 1000;
+}
 
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 
-      white-space: nowrap;
-    }
+.title {
+  text-align: left;
+}
 
-    .leaflet-tooltip.country-label::before {
-      display: none;
-    }
 
-    .error {
-      position: fixed;
-      left: 20px;
-      right: 20px;
-      bottom: 20px;
+.title h1 {
 
-      background: #b42318;
-      color: white;
+  margin: 0;
 
-      padding: 15px;
-      border-radius: 8px;
+  font-size:
+    clamp(30px, 4vw, 58px);
 
-      display: none;
-      z-index: 2000;
-    }
-  </style>
+  letter-spacing: 4px;
+
+  font-weight: 800;
+}
+
+
+.title p {
+
+  margin:
+    8px 0 0;
+
+  font-size:
+    clamp(15px, 1.5vw, 22px);
+
+  opacity: 0.75;
+}
+
+
+/* =========================================================
+   STATISTICS
+   ========================================================= */
+
+.stats {
+
+  display: flex;
+
+  gap: 25px;
+}
+
+
+.stat {
+
+  min-width: 170px;
+
+  padding:
+    12px 24px;
+
+  border-radius: 16px;
+
+  background:
+    rgba(255,255,255,0.10);
+
+  border:
+    1px solid rgba(255,255,255,0.18);
+
+  text-align: center;
+
+  backdrop-filter:
+    blur(8px);
+}
+
+
+.stat-number {
+
+  font-size:
+    clamp(32px, 4vw, 54px);
+
+  line-height: 1;
+
+  font-weight: 800;
+}
+
+
+.stat-label {
+
+  margin-top: 6px;
+
+  font-size: 12px;
+
+  letter-spacing: 2px;
+
+  opacity: 0.7;
+}
+
+
+/* =========================================================
+   MAIN AREA
+   ========================================================= */
+
+.main {
+
+  height:
+    calc(100vh - 150px);
+
+  display: flex;
+
+  position: relative;
+}
+
+
+/* =========================================================
+   MAP
+   ========================================================= */
+
+#map {
+
+  flex: 1;
+
+  height: 100%;
+
+  background:
+    #0d2034;
+}
+
+
+.leaflet-tile {
+
+  filter:
+    brightness(0.55)
+    saturate(0.65)
+    contrast(1.05);
+}
+
+
+/* =========================================================
+   RANKING PANEL
+   ========================================================= */
+
+.ranking {
+
+  width: 290px;
+
+  padding:
+    20px;
+
+  background:
+    rgba(5,15,27,0.90);
+
+  border-left:
+    1px solid rgba(255,255,255,0.12);
+
+  overflow-y: auto;
+}
+
+
+.ranking h2 {
+
+  margin:
+    0 0 18px;
+
+  font-size: 18px;
+
+  letter-spacing: 2px;
+}
+
+
+.rank {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding:
+    9px 0;
+
+  border-bottom:
+    1px solid rgba(255,255,255,0.08);
+}
+
+
+.rank-position {
+
+  width: 25px;
+
+  opacity: 0.5;
+
+  font-weight: bold;
+}
+
+
+.rank-name {
+
+  flex: 1;
+
+  font-size: 15px;
+}
+
+
+.rank-count {
+
+  font-size: 17px;
+
+  font-weight: bold;
+}
+
+
+/* =========================================================
+   COUNTRY MARKERS
+   ========================================================= */
+
+.country-marker {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255,255,255,0.92);
+
+  border:
+    4px solid rgba(255,255,255,0.85);
+
+  color:
+    #10243a;
+
+  font-weight:
+    900;
+
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.15),
+    0 5px 20px rgba(0,0,0,0.45);
+}
+
+
+.country-label {
+
+  background:
+    rgba(5,15,27,0.92);
+
+  color: white;
+
+  border:
+    1px solid rgba(255,255,255,0.25);
+
+  border-radius: 8px;
+
+  padding:
+    5px 9px;
+
+  font-size: 13px;
+
+  font-weight: bold;
+
+  box-shadow:
+    0 3px 10px rgba(0,0,0,0.4);
+}
+
+
+.leaflet-tooltip.country-label::before {
+
+  display: none;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+#error {
+
+  display: none;
+
+  position: fixed;
+
+  bottom: 20px;
+
+  left: 20px;
+
+  right: 20px;
+
+  padding: 15px;
+
+  background: #b42318;
+
+  color: white;
+
+  border-radius: 10px;
+
+  z-index: 5000;
+}
+
+</style>
+
 </head>
+
 
 <body>
 
+
 <header>
 
-  <h1>WHERE ARE YOU FROM?</h1>
+  <div class="title">
 
-  <div class="subtitle">
-    Le provenienze dei partecipanti
+    <h1>WHERE ARE YOU FROM?</h1>
+
+    <p>
+      Where our participants come from
+    </p>
+
   </div>
+
 
   <div class="stats">
 
     <div class="stat">
-      <div class="stat-number" id="totalPeople">0</div>
-      <div class="stat-label">Partecipanti</div>
+
+      <div
+        class="stat-number"
+        id="totalPeople">
+        0
+      </div>
+
+      <div class="stat-label">
+        PARTICIPANTS
+      </div>
+
     </div>
 
+
     <div class="stat">
-      <div class="stat-number" id="totalCountries">0</div>
-      <div class="stat-label">Paesi</div>
+
+      <div
+        class="stat-number"
+        id="totalCountries">
+        0
+      </div>
+
+      <div class="stat-label">
+        COUNTRIES
+      </div>
+
     </div>
 
   </div>
 
 </header>
 
-<div id="map"></div>
 
-<div id="error" class="error"></div>
+<div class="main">
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <div id="map"></div>
+
+
+  <aside class="ranking">
+
+    <h2>
+      TOP COUNTRIES
+    </h2>
+
+    <div id="rankingList"></div>
+
+  </aside>
+
+
+</div>
+
+
+<div id="error"></div>
+
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
 
 <script>
 
-  /* =========================================================
-     SUPABASE
-     ========================================================= */
+/* =========================================================
+   SUPABASE
+   ========================================================= */
 
-  const SUPABASE_URL =
-    "https://moxytzkrlzthpcrtivbg.supabase.co";
+const SUPABASE_URL =
+  "https://moxytzkrlzthpcrtivbg.supabase.co";
 
-  const SUPABASE_KEY =
-    "sb_publishable_FVDf2vyHJAykJ52481stOA_A5Ojf-3A";
+const SUPABASE_KEY =
+  "sb_publishable_FVDf2vyHJAykJ52481stOA_A5Ojf-3A";
 
 
-  /* =========================================================
-     MAPPA
-     ========================================================= */
+/* =========================================================
+   MAP
+   ========================================================= */
 
-  const map = L.map("map", {
+const map =
+  L.map("map", {
+
     worldCopyJump: false,
+
     minZoom: 2,
+
     maxZoom: 6
-  }).setView([25, 10], 2);
+
+  })
+
+  .setView(
+    [25, 10],
+    2
+  );
 
 
-  L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-      attribution: "&copy; OpenStreetMap contributors",
-      maxZoom: 19
-    }
-  ).addTo(map);
+L.tileLayer(
 
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
 
-  /* =========================================================
-     POSIZIONI DEI PAESI
-     
-     Usiamo coordinate fisse per rendere gli indicatori
-     affidabili anche quando il GeoJSON ha geometrie complesse.
-     ========================================================= */
+  {
 
-  const countryPositions = {
+    attribution:
+      "&copy; OpenStreetMap contributors",
 
-    ITA: [42.5, 12.5],
-    FRA: [46.5, 2.5],
-    ESP: [40.2, -3.7],
-    PRT: [39.5, -8.0],
-    DEU: [51.0, 10.0],
-    AUT: [47.6, 14.1],
-    CHE: [46.8, 8.2],
-    BEL: [50.8, 4.5],
-    NLD: [52.2, 5.3],
-    GBR: [54.5, -3.4],
-    IRL: [53.2, -8.0],
-    DNK: [56.0, 10.0],
-    SWE: [62.0, 15.0],
-    NOR: [65.0, 13.0],
-    FIN: [64.5, 26.0],
-    ISL: [65.0, -19.0],
-
-    POL: [52.0, 19.0],
-    CZE: [49.8, 15.5],
-    SVK: [48.7, 19.5],
-    HUN: [47.2, 19.5],
-    ROU: [46.0, 25.0],
-    BGR: [42.7, 25.3],
-    GRC: [39.0, 22.0],
-    HRV: [45.1, 15.2],
-    SVN: [46.1, 14.9],
-    SRB: [44.0, 21.0],
-    BIH: [44.2, 17.7],
-    ALB: [41.2, 20.0],
-    MKD: [41.6, 21.7],
-    MNE: [42.7, 19.3],
-    UKR: [49.0, 32.0],
-    BLR: [53.7, 28.0],
-    LTU: [55.2, 24.0],
-    LVA: [57.0, 24.6],
-    EST: [58.6, 25.5],
-
-    TUR: [39.0, 35.0],
-    CYP: [35.1, 33.4],
-    MLT: [35.9, 14.4],
-
-    USA: [39.5, -98.5],
-    CAN: [56.0, -106.0],
-    MEX: [23.6, -102.5],
-    CUB: [21.5, -79.5],
-    DOM: [18.7, -70.2],
-    JAM: [18.1, -77.3],
-    BRA: [-10.0, -55.0],
-    ARG: [-34.0, -64.0],
-    CHL: [-30.0, -71.0],
-    PER: [-10.0, -76.0],
-    COL: [4.5, -74.0],
-    ECU: [-1.5, -78.0],
-    BOL: [-17.0, -65.0],
-    PRY: [-23.5, -58.0],
-    URY: [-32.8, -56.0],
-    VEN: [7.0, -66.0],
-
-    MAR: [31.8, -7.0],
-    DZA: [28.0, 2.5],
-    TUN: [34.0, 9.0],
-    LBY: [27.0, 17.0],
-    EGY: [27.0, 30.0],
-    SEN: [14.5, -14.5],
-    GHA: [8.0, -1.2],
-    NGA: [9.0, 8.0],
-    KEN: [0.2, 37.9],
-    ETH: [9.1, 40.5],
-    ZAF: [-30.5, 22.0],
-    ZWE: [-19.0, 29.8],
-    MOZ: [-18.5, 35.0],
-    MDG: [-20.0, 47.0],
-
-    ISR: [31.5, 34.8],
-    JOR: [31.2, 36.0],
-    LBN: [33.9, 35.8],
-    SAU: [24.0, 45.0],
-    ARE: [24.0, 54.0],
-    IRN: [32.0, 53.0],
-    IRQ: [33.0, 44.0],
-
-    IND: [22.5, 79.0],
-    PAK: [30.0, 70.0],
-    BGD: [24.0, 90.0],
-    LKA: [7.8, 80.7],
-    NPL: [28.4, 84.1],
-
-    CHN: [35.0, 103.0],
-    JPN: [36.2, 138.0],
-    KOR: [36.5, 127.8],
-    PRK: [40.0, 127.0],
-    MNG: [46.8, 103.8],
-
-    THA: [15.0, 101.0],
-    VNM: [16.0, 108.0],
-    KHM: [12.5, 105.0],
-    MYS: [4.5, 102.0],
-    SGP: [1.35, 103.8],
-    IDN: [-2.0, 118.0],
-    PHL: [12.8, 122.0],
-
-    AUS: [-25.0, 133.0],
-    NZL: [-41.0, 174.0],
-
-    RUS: [60.0, 100.0],
-    KAZ: [48.0, 67.0],
-    UZB: [41.5, 64.0],
-    GEO: [42.0, 43.5],
-    ARM: [40.2, 44.5],
-    AZE: [40.4, 47.7]
-
-  };
-
-
-  /* =========================================================
-     NOMI DEI PAESI
-     ========================================================= */
-
-  const countryNames = {
-
-    ITA: "Italia",
-    FRA: "Francia",
-    ESP: "Spagna",
-    PRT: "Portogallo",
-    DEU: "Germania",
-    AUT: "Austria",
-    CHE: "Svizzera",
-    BEL: "Belgio",
-    NLD: "Paesi Bassi",
-    GBR: "Regno Unito",
-    IRL: "Irlanda",
-    DNK: "Danimarca",
-    SWE: "Svezia",
-    NOR: "Norvegia",
-    FIN: "Finlandia",
-    ISL: "Islanda",
-
-    POL: "Polonia",
-    CZE: "Repubblica Ceca",
-    SVK: "Slovacchia",
-    HUN: "Ungheria",
-    ROU: "Romania",
-    BGR: "Bulgaria",
-    GRC: "Grecia",
-    HRV: "Croazia",
-    SVN: "Slovenia",
-    SRB: "Serbia",
-    BIH: "Bosnia-Erzegovina",
-    ALB: "Albania",
-    MKD: "Macedonia del Nord",
-    MNE: "Montenegro",
-    UKR: "Ucraina",
-    BLR: "Bielorussia",
-    LTU: "Lituania",
-    LVA: "Lettonia",
-    EST: "Estonia",
-
-    TUR: "Turchia",
-    CYP: "Cipro",
-    MLT: "Malta",
-
-    USA: "Stati Uniti",
-    CAN: "Canada",
-    MEX: "Messico",
-    CUB: "Cuba",
-    DOM: "Repubblica Dominicana",
-    JAM: "Giamaica",
-    BRA: "Brasile",
-    ARG: "Argentina",
-    CHL: "Cile",
-    PER: "Perù",
-    COL: "Colombia",
-    ECU: "Ecuador",
-    BOL: "Bolivia",
-    PRY: "Paraguay",
-    URY: "Uruguay",
-    VEN: "Venezuela",
-
-    MAR: "Marocco",
-    DZA: "Algeria",
-    TUN: "Tunisia",
-    LBY: "Libia",
-    EGY: "Egitto",
-    SEN: "Senegal",
-    GHA: "Ghana",
-    NGA: "Nigeria",
-    KEN: "Kenya",
-    ETH: "Etiopia",
-    ZAF: "Sudafrica",
-    ZWE: "Zimbabwe",
-    MOZ: "Mozambico",
-    MDG: "Madagascar",
-
-    ISR: "Israele",
-    JOR: "Giordania",
-    LBN: "Libano",
-    SAU: "Arabia Saudita",
-    ARE: "Emirati Arabi Uniti",
-    IRN: "Iran",
-    IRQ: "Iraq",
-
-    IND: "India",
-    PAK: "Pakistan",
-    BGD: "Bangladesh",
-    LKA: "Sri Lanka",
-    NPL: "Nepal",
-
-    CHN: "Cina",
-    JPN: "Giappone",
-    KOR: "Corea del Sud",
-    PRK: "Corea del Nord",
-    MNG: "Mongolia",
-
-    THA: "Thailandia",
-    VNM: "Vietnam",
-    KHM: "Cambogia",
-    MYS: "Malesia",
-    SGP: "Singapore",
-    IDN: "Indonesia",
-    PHL: "Filippine",
-
-    AUS: "Australia",
-    NZL: "Nuova Zelanda",
-
-    RUS: "Russia",
-    KAZ: "Kazakistan",
-    UZB: "Uzbekistan",
-    GEO: "Georgia",
-    ARM: "Armenia",
-    AZE: "Azerbaigian"
-
-  };
-
-
-  /* =========================================================
-     INDICATORI ATTUALI
-     ========================================================= */
-
-  let markers = {};
-
-
-  /* =========================================================
-     MOSTRA ERRORE
-     ========================================================= */
-
-  function showError(message) {
-
-    const box = document.getElementById("error");
-
-    box.textContent = message;
-    box.style.display = "block";
+    maxZoom: 19
 
   }
 
-
-  /* =========================================================
-     CREA / AGGIORNA INDICATORE
-     ========================================================= */
-
-  function createMarker(code, count) {
-
-    const position = countryPositions[code];
-
-    if (!position) {
-      console.warn(
-        "Coordinate non disponibili per:",
-        code
-      );
-      return;
-    }
+).addTo(map);
 
 
-    /*
-     * Dimensione del cerchio.
-     *
-     * Con 1 persona = cerchio piccolo.
-     * Con molte persone = cerchio progressivamente più grande.
-     */
+/* =========================================================
+   COUNTRY POSITIONS
+   ========================================================= */
 
-    const size = Math.min(
-      22 + Math.sqrt(count) * 12,
-      90
+const countryPositions = {
+
+  ITA: [42.5, 12.5],
+  FRA: [46.5, 2.5],
+  ESP: [40.2, -3.7],
+  PRT: [39.5, -8],
+  DEU: [51, 10],
+  AUT: [47.6, 14.1],
+  CHE: [46.8, 8.2],
+  BEL: [50.8, 4.5],
+  NLD: [52.2, 5.3],
+  GBR: [54.5, -3.4],
+  IRL: [53.2, -8],
+  DNK: [56, 10],
+  SWE: [62, 15],
+  NOR: [65, 13],
+  FIN: [64.5, 26],
+  ISL: [65, -19],
+
+  POL: [52, 19],
+  CZE: [49.8, 15.5],
+  SVK: [48.7, 19.5],
+  HUN: [47.2, 19.5],
+  ROU: [46, 25],
+  BGR: [42.7, 25.3],
+  GRC: [39, 22],
+  HRV: [45.1, 15.2],
+  SVN: [46.1, 14.9],
+  SRB: [44, 21],
+  BIH: [44.2, 17.7],
+  ALB: [41.2, 20],
+  MNE: [42.7, 19.3],
+  UKR: [49, 32],
+
+  TUR: [39, 35],
+  CYP: [35.1, 33.4],
+  MLT: [35.9, 14.4],
+
+  USA: [39.5, -98.5],
+  CAN: [56, -106],
+  MEX: [23.6, -102.5],
+
+  BRA: [-10, -55],
+  ARG: [-34, -64],
+  CHL: [-30, -71],
+  PER: [-10, -76],
+  COL: [4.5, -74],
+  ECU: [-1.5, -78],
+  BOL: [-17, -65],
+  PRY: [-23.5, -58],
+  URY: [-32.8, -56],
+  VEN: [7, -66],
+
+  MAR: [31.8, -7],
+  DZA: [28, 2.5],
+  TUN: [34, 9],
+  LBY: [27, 17],
+  EGY: [27, 30],
+
+  SEN: [14.5, -14.5],
+  GHA: [8, -1.2],
+  NGA: [9, 8],
+  KEN: [0.2, 37.9],
+  ETH: [9.1, 40.5],
+  ZAF: [-30.5, 22],
+
+  ISR: [31.5, 34.8],
+  JOR: [31.2, 36],
+  LBN: [33.9, 35.8],
+  SAU: [24, 45],
+  ARE: [24, 54],
+  IRN: [32, 53],
+  IRQ: [33, 44],
+
+  IND: [22.5, 79],
+  PAK: [30, 70],
+  BGD: [24, 90],
+  LKA: [7.8, 80.7],
+  NPL: [28.4, 84.1],
+
+  CHN: [35, 103],
+  JPN: [36.2, 138],
+  KOR: [36.5, 127.8],
+  MNG: [46.8, 103.8],
+
+  THA: [15, 101],
+  VNM: [16, 108],
+  KHM: [12.5, 105],
+  MYS: [4.5, 102],
+  SGP: [1.35, 103.8],
+  IDN: [-2, 118],
+  PHL: [12.8, 122],
+
+  AUS: [-25, 133],
+  NZL: [-41, 174],
+
+  RUS: [60, 100],
+  KAZ: [48, 67],
+  GEO: [42, 43.5],
+  ARM: [40.2, 44.5],
+  AZE: [40.4, 47.7]
+
+};
+
+
+/* =========================================================
+   COUNTRY NAMES – ENGLISH
+   ========================================================= */
+
+const countryNames = {
+
+  ITA: "Italy",
+  FRA: "France",
+  ESP: "Spain",
+  PRT: "Portugal",
+  DEU: "Germany",
+  AUT: "Austria",
+  CHE: "Switzerland",
+  BEL: "Belgium",
+  NLD: "Netherlands",
+  GBR: "United Kingdom",
+  IRL: "Ireland",
+  DNK: "Denmark",
+  SWE: "Sweden",
+  NOR: "Norway",
+  FIN: "Finland",
+  ISL: "Iceland",
+
+  POL: "Poland",
+  CZE: "Czech Republic",
+  SVK: "Slovakia",
+  HUN: "Hungary",
+  ROU: "Romania",
+  BGR: "Bulgaria",
+  GRC: "Greece",
+  HRV: "Croatia",
+  SVN: "Slovenia",
+  SRB: "Serbia",
+  BIH: "Bosnia and Herzegovina",
+  ALB: "Albania",
+  MNE: "Montenegro",
+  UKR: "Ukraine",
+
+  TUR: "Turkey",
+  CYP: "Cyprus",
+  MLT: "Malta",
+
+  USA: "United States",
+  CAN: "Canada",
+  MEX: "Mexico",
+
+  BRA: "Brazil",
+  ARG: "Argentina",
+  CHL: "Chile",
+  PER: "Peru",
+  COL: "Colombia",
+  ECU: "Ecuador",
+  BOL: "Bolivia",
+  PRY: "Paraguay",
+  URY: "Uruguay",
+  VEN: "Venezuela",
+
+  MAR: "Morocco",
+  DZA: "Algeria",
+  TUN: "Tunisia",
+  LBY: "Libya",
+  EGY: "Egypt",
+  SEN: "Senegal",
+  GHA: "Ghana",
+  NGA: "Nigeria",
+  KEN: "Kenya",
+  ETH: "Ethiopia",
+  ZAF: "South Africa",
+
+  ISR: "Israel",
+  JOR: "Jordan",
+  LBN: "Lebanon",
+  SAU: "Saudi Arabia",
+  ARE: "United Arab Emirates",
+  IRN: "Iran",
+  IRQ: "Iraq",
+
+  IND: "India",
+  PAK: "Pakistan",
+  BGD: "Bangladesh",
+  LKA: "Sri Lanka",
+  NPL: "Nepal",
+
+  CHN: "China",
+  JPN: "Japan",
+  KOR: "South Korea",
+  MNG: "Mongolia",
+
+  THA: "Thailand",
+  VNM: "Vietnam",
+  KHM: "Cambodia",
+  MYS: "Malaysia",
+  SGP: "Singapore",
+  IDN: "Indonesia",
+  PHL: "Philippines",
+
+  AUS: "Australia",
+  NZL: "New Zealand",
+
+  RUS: "Russia",
+  KAZ: "Kazakhstan",
+  GEO: "Georgia",
+  ARM: "Armenia",
+  AZE: "Azerbaijan"
+
+};
+
+
+/* =========================================================
+   MARKERS
+   ========================================================= */
+
+let markers = {};
+
+
+function createMarker(code, count) {
+
+  const position =
+    countryPositions[code];
+
+  if (!position) return;
+
+
+  const size =
+    Math.min(
+      28 + Math.sqrt(count) * 14,
+      100
     );
 
 
-    const icon = L.divIcon({
+  const icon =
+    L.divIcon({
 
       className: "",
 
       html:
-        `<div class="country-marker"
-              style="
-                width:${size}px;
-                height:${size}px;
-                font-size:${Math.max(13, size / 3)}px;
-              ">
-            ${count}
-         </div>`,
+        `<div
+          class="country-marker"
+          style="
+            width:${size}px;
+            height:${size}px;
+            font-size:${Math.max(15, size / 3)}px;
+          "
+        >
+          ${count}
+        </div>`,
 
-      iconSize: [size, size],
+      iconSize:
+        [size, size],
 
-      iconAnchor: [
-        size / 2,
-        size / 2
-      ]
+      iconAnchor:
+        [size / 2, size / 2]
 
     });
 
 
-    const marker = L.marker(
+  const marker =
+    L.marker(
       position,
       { icon: icon }
     );
 
 
-    marker.bindTooltip(
-      `${countryNames[code] || code}: ${count}`,
-      {
-        permanent: true,
-        direction: "top",
-        offset: [0, -size / 2],
-        className: "country-label"
+  marker.bindTooltip(
+
+    `${countryNames[code] || code}: ${count}`,
+
+    {
+
+      permanent: true,
+
+      direction: "top",
+
+      offset:
+        [0, -size / 2],
+
+      className:
+        "country-label"
+
+    }
+
+  );
+
+
+  marker.addTo(map);
+
+  markers[code] = marker;
+
+}
+
+
+/* =========================================================
+   UPDATE MAP
+   ========================================================= */
+
+function updateMap(counts) {
+
+
+  Object.entries(counts)
+    .forEach(
+      ([code, count]) => {
+
+        if (count <= 0) return;
+
+
+        if (markers[code]) {
+
+          const size =
+            Math.min(
+              28 + Math.sqrt(count) * 14,
+              100
+            );
+
+
+          const icon =
+            L.divIcon({
+
+              className: "",
+
+              html:
+                `<div
+                  class="country-marker"
+                  style="
+                    width:${size}px;
+                    height:${size}px;
+                    font-size:${Math.max(15, size / 3)}px;
+                  "
+                >
+                  ${count}
+                </div>`,
+
+              iconSize:
+                [size, size],
+
+              iconAnchor:
+                [size / 2, size / 2]
+
+            });
+
+
+          markers[code]
+            .setIcon(icon);
+
+
+          markers[code]
+            .unbindTooltip();
+
+
+          markers[code]
+            .bindTooltip(
+
+              `${countryNames[code] || code}: ${count}`,
+
+              {
+
+                permanent: true,
+
+                direction: "top",
+
+                offset:
+                  [0, -size / 2],
+
+                className:
+                  "country-label"
+
+              }
+
+            );
+
+        }
+
+        else {
+
+          createMarker(
+            code,
+            count
+          );
+
+        }
+
+      });
+
+
+  Object.keys(markers)
+    .forEach(code => {
+
+      if (!counts[code]) {
+
+        map.removeLayer(
+          markers[code]
+        );
+
+        delete markers[code];
+
       }
+
+    });
+
+}
+
+
+/* =========================================================
+   RANKING
+   ========================================================= */
+
+function updateRanking(counts) {
+
+  const list =
+    document.getElementById(
+      "rankingList"
     );
 
 
-    marker.addTo(map);
+  const sorted =
+    Object.entries(counts)
+      .sort(
+        (a,b) => b[1] - a[1]
+      )
+      .slice(0, 10);
 
 
-    markers[code] = marker;
-
-  }
+  list.innerHTML = "";
 
 
-  /* =========================================================
-     AGGIORNA LA MAPPA
-     ========================================================= */
-function updateMap(counts) {
+  sorted.forEach(
+    ([code, count], index) => {
 
-  Object.entries(counts).forEach(([code, count]) => {
+      const row =
+        document.createElement("div");
 
-    if (count <= 0) return;
-
-    const position = countryPositions[code];
-
-    if (!position) {
-      console.warn("Coordinate non disponibili per:", code);
-      return;
-    }
-
-    /*
-     * Se il marker esiste già, lo aggiorniamo.
-     * Se non esiste, lo creiamo.
-     */
-
-    if (markers[code]) {
-
-      const size = Math.min(
-        22 + Math.sqrt(count) * 12,
-        90
-      );
-
-      const icon = L.divIcon({
-        className: "",
-        html:
-          `<div class="country-marker"
-                style="
-                  width:${size}px;
-                  height:${size}px;
-                  font-size:${Math.max(13, size / 3)}px;
-                ">
-              ${count}
-           </div>`,
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2]
-      });
-
-      markers[code].setIcon(icon);
-
-      markers[code].unbindTooltip();
-
-      markers[code].bindTooltip(
-        `${countryNames[code] || code}: ${count}`,
-        {
-          permanent: true,
-          direction: "top",
-          offset: [0, -size / 2],
-          className: "country-label"
-        }
-      );
-
-    } else {
-
-      createMarker(code, count);
-
-    }
-
-  });
+      row.className =
+        "rank";
 
 
-  /*
-   * Se un Paese non è più presente nei dati,
-   * eliminiamo il relativo marker.
-   */
+      row.innerHTML = `
 
-  Object.keys(markers).forEach(code => {
+        <div class="rank-position">
+          ${index + 1}
+        </div>
 
-    if (!counts[code]) {
+        <div class="rank-name">
+          ${countryNames[code] || code}
+        </div>
 
-      map.removeLayer(markers[code]);
+        <div class="rank-count">
+          ${count}
+        </div>
 
-      delete markers[code];
+      `;
 
-    }
 
-  });
+      list.appendChild(row);
+
+    });
 
 }
- 
 
-  /* =========================================================
-     CARICA RISPOSTE DA SUPABASE
-     ========================================================= */
 
-  async function loadResponses() {
+/* =========================================================
+   LOAD DATA
+   ========================================================= */
 
-    try {
+async function loadResponses() {
 
-      const response = await fetch(
+  try {
+
+    const response =
+      await fetch(
+
         SUPABASE_URL +
         "/rest/v1/responses?select=country_code,country_name",
+
         {
+
           method: "GET",
 
           headers: {
-            "apikey": SUPABASE_KEY,
+
+            "apikey":
+              SUPABASE_KEY,
+
             "Authorization":
-              "Bearer " + SUPABASE_KEY
+              "Bearer " +
+              SUPABASE_KEY
+
           }
+
         }
+
       );
 
 
-      if (!response.ok) {
+    if (!response.ok) {
 
-        const errorText =
-          await response.text();
+      throw new Error(
+        "Supabase error: " +
+        response.status
+      );
 
-        throw new Error(
-          "Supabase: " +
-          response.status +
-          " – " +
-          errorText
-        );
+    }
+
+
+    const data =
+      await response.json();
+
+
+    const counts = {};
+
+
+    data.forEach(row => {
+
+      const code =
+        String(
+          row.country_code
+        )
+        .trim()
+        .toUpperCase();
+
+
+      if (!counts[code]) {
+
+        counts[code] = 0;
 
       }
 
 
-      const data =
-        await response.json();
+      counts[code]++;
+
+    });
 
 
-      /* Conteggi */
+    /* STATISTICS */
 
-      const counts = {};
-
-
-      data.forEach(row => {
-
-        const code =
-          String(row.country_code)
-          .trim()
-          .toUpperCase();
+    document.getElementById(
+      "totalPeople"
+    )
+    .textContent =
+      data.length;
 
 
-        if (!counts[code]) {
-          counts[code] = 0;
-        }
-
-        counts[code]++;
-
-      });
+    document.getElementById(
+      "totalCountries"
+    )
+    .textContent =
+      Object.keys(counts).length;
 
 
-      /* Statistiche */
+    /* MAP */
 
-      const totalPeople =
-        data.length;
-
-
-      const totalCountries =
-        Object.keys(counts).length;
+    updateMap(
+      counts
+    );
 
 
-      document.getElementById(
-        "totalPeople"
-      ).textContent = totalPeople;
+    /* RANKING */
+
+    updateRanking(
+      counts
+    );
 
 
-      document.getElementById(
-        "totalCountries"
-      ).textContent = totalCountries;
-
-
-      /* Mappa */
-
-      updateMap(counts);
-
-
-      console.log(
-        "Risposte ricevute:",
-        data
-      );
-
-
-      console.log(
-        "Conteggi:",
-        counts
-      );
-
-    }
-
-    catch (error) {
-
-      console.error(error);
-
-      showError(
-        "Errore nel caricamento dei dati: " +
-        error.message
-      );
-
-    }
+    console.log(
+      "Responses:",
+      data
+    );
 
   }
 
+  catch(error) {
 
-  /* =========================================================
-     AVVIO
-     ========================================================= */
-
-  loadResponses();
+    console.error(
+      error
+    );
 
 
-  /*
-   * Aggiornamento automatico ogni 3 secondi.
-   */
+    const errorBox =
+      document.getElementById(
+        "error"
+      );
 
-  setInterval(
-    loadResponses,
-    3000
-  );
+
+    errorBox.textContent =
+      error.message;
+
+
+    errorBox.style.display =
+      "block";
+
+  }
+
+}
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+loadResponses();
+
+
+setInterval(
+  loadResponses,
+  3000
+);
 
 </script>
 
