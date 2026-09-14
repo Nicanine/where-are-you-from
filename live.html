@@ -540,33 +540,88 @@
   /* =========================================================
      AGGIORNA LA MAPPA
      ========================================================= */
+function updateMap(counts) {
 
-  function updateMap(counts) {
+  Object.entries(counts).forEach(([code, count]) => {
 
+    if (count <= 0) return;
 
-    /* Rimuoviamo gli indicatori precedenti */
+    const position = countryPositions[code];
 
-    Object.values(markers).forEach(
-      marker => map.removeLayer(marker)
-    );
+    if (!position) {
+      console.warn("Coordinate non disponibili per:", code);
+      return;
+    }
 
-    markers = {};
+    /*
+     * Se il marker esiste già, lo aggiorniamo.
+     * Se non esiste, lo creiamo.
+     */
 
+    if (markers[code]) {
 
-    /* Creiamo quelli aggiornati */
+      const size = Math.min(
+        22 + Math.sqrt(count) * 12,
+        90
+      );
 
-    Object.entries(counts).forEach(
-      ([code, count]) => {
+      const icon = L.divIcon({
+        className: "",
+        html:
+          `<div class="country-marker"
+                style="
+                  width:${size}px;
+                  height:${size}px;
+                  font-size:${Math.max(13, size / 3)}px;
+                ">
+              ${count}
+           </div>`,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
+      });
 
-        if (count > 0) {
-          createMarker(code, count);
+      markers[code].setIcon(icon);
+
+      markers[code].unbindTooltip();
+
+      markers[code].bindTooltip(
+        `${countryNames[code] || code}: ${count}`,
+        {
+          permanent: true,
+          direction: "top",
+          offset: [0, -size / 2],
+          className: "country-label"
         }
+      );
 
-      }
-    );
+    } else {
 
-  }
+      createMarker(code, count);
 
+    }
+
+  });
+
+
+  /*
+   * Se un Paese non è più presente nei dati,
+   * eliminiamo il relativo marker.
+   */
+
+  Object.keys(markers).forEach(code => {
+
+    if (!counts[code]) {
+
+      map.removeLayer(markers[code]);
+
+      delete markers[code];
+
+    }
+
+  });
+
+}
+ 
 
   /* =========================================================
      CARICA RISPOSTE DA SUPABASE
@@ -690,7 +745,7 @@
 
   loadResponses();
 
-createMarker("ITA", 1);
+
   /*
    * Aggiornamento automatico ogni 3 secondi.
    */
